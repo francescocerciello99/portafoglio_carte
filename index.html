@@ -1,0 +1,1039 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<meta name="theme-color" content="#0C6A62">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Portafoglio">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+
+</head><body>
+<title>Portafoglio carte</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: una colonna centrata. Riepilogo del plafond, scadenze in arrivo, poi la griglia delle carte; il dettaglio di una carta sostituisce la griglia. */
+:root {
+  --bg: #EDF1F0;
+  --surface: #FFFFFF;
+  --surface-2: #F3F7F6;
+  --fg: #13201E;
+  --muted: #587068;
+  --line: #D4DCDA;
+  --accent: #0C6A62;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DDEFEC;
+  --ok: #1D7A45;
+  --warn: #9A5A06;
+  --bad: #B3261E;
+  --ok-soft: #DDF1E4;
+  --warn-soft: #F8EBCF;
+  --bad-soft: #F8DFDC;
+  --c-petrol: linear-gradient(135deg, #12857A 0%, #0A3F46 100%);
+  --c-ink: linear-gradient(135deg, #34414C 0%, #10161B 100%);
+  --c-plum: linear-gradient(135deg, #85406F 0%, #34173A 100%);
+  --c-copper: linear-gradient(135deg, #C8743C 0%, #78331A 100%);
+  --c-indigo: linear-gradient(135deg, #4F5AD0 0%, #1C2260 100%);
+  --c-moss: linear-gradient(135deg, #658640 0%, #26391A 100%);
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1514;
+    --surface: #162120;
+    --surface-2: #1C2A29;
+    --fg: #E5EEEC;
+    --muted: #92A8A3;
+    --line: #2A3B39;
+    --accent: #4CC2B3;
+    --accent-ink: #052320;
+    --accent-soft: #19332F;
+    --ok: #5DCB8B;
+    --warn: #E6A64F;
+    --bad: #F27D74;
+    --ok-soft: #173325;
+    --warn-soft: #392C14;
+    --bad-soft: #3B1D1A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1514;
+  --surface: #162120;
+  --surface-2: #1C2A29;
+  --fg: #E5EEEC;
+  --muted: #92A8A3;
+  --line: #2A3B39;
+  --accent: #4CC2B3;
+  --accent-ink: #052320;
+  --accent-soft: #19332F;
+  --ok: #5DCB8B;
+  --warn: #E6A64F;
+  --bad: #F27D74;
+  --ok-soft: #173325;
+  --warn-soft: #392C14;
+  --bad-soft: #3B1D1A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 28px 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; text-wrap: balance; }
+h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.005em; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.top .titles { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.top .actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#status { font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+#status.err { color: var(--bad); }
+
+/* buttons */
+.btn {
+  font: inherit; font-weight: 600; font-size: 0.92rem;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  padding: 10px 16px; border-radius: 10px; cursor: pointer; line-height: 1.2;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { color: var(--bad); border-color: var(--bad); background: transparent; }
+.btn.danger.solid { background: var(--bad); color: #fff; }
+.btn.small { padding: 6px 11px; font-size: 0.82rem; }
+.btn.link { border: 0; background: none; padding: 6px 2px; color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* summary */
+.summary { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 20px; }
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px 24px; }
+.fig { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fig .v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(1.25rem, 3.4vw, 1.7rem); font-weight: 500; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.bar { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+.bar > i { display: block; height: 100%; border-radius: 99px; background: var(--ok); }
+.bar.warn > i { background: var(--warn); }
+.bar.bad > i { background: var(--bad); }
+.bar-label { display: flex; justify-content: space-between; gap: 12px; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
+
+/* upcoming */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.upcoming { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.upcoming li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.upcoming li:first-child { border-top: 0; }
+.upcoming .what { display: flex; flex-direction: column; min-width: 0; }
+.upcoming .what b { font-weight: 600; overflow-wrap: anywhere; }
+.upcoming .what span { font-size: 0.84rem; color: var(--muted); }
+.pill { font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; white-space: nowrap; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.pill.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.none { padding: 16px 18px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+
+/* cards grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); gap: 22px; }
+.wallet-card { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.plastic {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between;
+  width: 100%; aspect-ratio: 1.586; padding: 5% 6%; border: 0; border-radius: 16px; color: #fff; text-align: left;
+  font: inherit; cursor: default; overflow: hidden;
+  box-shadow: 0 10px 24px -12px rgba(8, 20, 20, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+button.plastic { cursor: pointer; }
+.plastic::after { content: ""; position: absolute; inset: -30% -10% auto auto; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 65%); pointer-events: none; }
+.plastic.c-petrol { background: var(--c-petrol); }
+.plastic.c-ink { background: var(--c-ink); }
+.plastic.c-plum { background: var(--c-plum); }
+.plastic.c-copper { background: var(--c-copper); }
+.plastic.c-indigo { background: var(--c-indigo); }
+.plastic.c-moss { background: var(--c-moss); }
+.plastic.ghost { background: transparent; color: var(--muted); box-shadow: none; border: 1.5px dashed var(--line); }
+.plastic.ghost::after { display: none; }
+.p-top, .p-bot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; position: relative; z-index: 1; }
+.p-top .issuer { font-weight: 700; font-size: 0.92rem; letter-spacing: 0.01em; overflow-wrap: anywhere; }
+.p-top .network { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.85; text-align: right; }
+.chip { width: 34px; height: 25px; border-radius: 5px; background: linear-gradient(135deg, #E9D08E, #B8964A); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); position: relative; z-index: 1; }
+.ghost .chip { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.p-num { font-family: var(--font-mono); font-size: clamp(0.95rem, 2.2vw, 1.15rem); letter-spacing: 0.1em; position: relative; z-index: 1; }
+.p-bot .p-name { font-weight: 600; font-size: 0.88rem; overflow-wrap: anywhere; }
+.p-bot .p-exp { font-family: var(--font-mono); font-size: 0.74rem; opacity: 0.9; white-space: nowrap; }
+.wc-meta { display: flex; flex-direction: column; gap: 12px; padding: 0 2px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.stat { display: flex; flex-direction: column; min-width: 0; }
+.stat span { font-size: 0.76rem; color: var(--muted); }
+.stat b { font-weight: 600; font-size: 0.9rem; overflow-wrap: anywhere; }
+.stat b.num { font-weight: 500; }
+.flags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* empty */
+.empty { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 32px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(20px, 4vw, 40px); }
+.empty .copy { display: flex; flex-direction: column; gap: 14px; }
+.empty .copy p { color: var(--muted); max-width: 52ch; }
+.empty .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+@media (max-width: 720px) { .empty { grid-template-columns: minmax(0, 1fr); } }
+.loading { color: var(--muted); padding: 40px 0; }
+
+/* banner */
+.banner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; background: var(--accent-soft); color: var(--fg); border-radius: 12px; padding: 10px 16px; font-size: 0.88rem; }
+.banner.note { background: var(--warn-soft); }
+
+/* detail */
+.back { align-self: flex-start; }
+.detail-head { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 760px) { .detail-head { grid-template-columns: minmax(0, 1fr); } }
+.detail-info { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.detail-info .stats { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.row-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.two-col { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+.tx-list { list-style: none; margin: 0; padding: 0; }
+.tx-list li { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); }
+.tx-list li:first-child { border-top: 0; }
+.tx-date { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+.tx-desc { min-width: 0; display: flex; flex-direction: column; }
+.tx-desc b { font-weight: 600; overflow-wrap: anywhere; }
+.tx-desc span { font-size: 0.78rem; color: var(--muted); }
+.tx-amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; }
+.tx-amt.in { color: var(--ok); }
+.x { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 1.15rem; line-height: 1; padding: 4px 6px; border-radius: 6px; }
+.x:hover { color: var(--bad); }
+.cat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 0.86rem; }
+.cat-row .bar { grid-column: 1 / -1; height: 6px; }
+.cat-row .bar > i { background: var(--accent); }
+.cats { display: flex; flex-direction: column; gap: 12px; }
+
+/* forms */
+form { display: flex; flex-direction: column; gap: 14px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+label, .lbl { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+input, select {
+  font: inherit; font-size: 0.95rem; color: var(--fg); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; width: 100%; min-width: 0;
+}
+input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.hint { font-size: 0.78rem; color: var(--muted); }
+.form-error { color: var(--bad); font-size: 0.86rem; min-height: 1.2em; }
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.swatches label { position: relative; cursor: pointer; }
+.swatches input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.swatches span { display: block; width: 34px; height: 24px; border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+.swatches input:checked + span { outline: 2px solid var(--fg); outline-offset: 2px; }
+.swatches input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.s-petrol { background: var(--c-petrol); } .s-ink { background: var(--c-ink); } .s-plum { background: var(--c-plum); }
+.s-copper { background: var(--c-copper); } .s-indigo { background: var(--c-indigo); } .s-moss { background: var(--c-moss); }
+
+/* overlay */
+#overlay {
+  position: fixed; inset: 0; z-index: 20; background: rgba(6, 14, 14, 0.55);
+  display: flex; align-items: flex-start; justify-content: center; overflow-y: auto;
+  padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+  padding-top: calc(24px + env(safe-area-inset-top, 0px)); padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+#overlay[hidden] { display: none; }
+.modal { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; width: 100%; max-width: 560px; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+.foot { font-size: 0.8rem; color: var(--muted); max-width: 70ch; }
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .bar > i { transition: filter 0.15s, border-color 0.15s, width 0.4s; }
+}
+@media (max-width: 480px) {
+  .tx-list li { grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 8px; }
+}
+
+/* hero: saldo netto */
+.hero { border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 18px; background: var(--surface); border: 1px solid var(--line); }
+.hero.ok { background: var(--ok-soft); border-color: transparent; }
+.hero.bad { background: var(--bad-soft); border-color: transparent; }
+.hero-main { display: flex; flex-direction: column; gap: 8px; }
+.hero-net { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.hero .big { font-size: clamp(2rem, 8vw, 3.2rem); font-weight: 500; letter-spacing: -0.03em; line-height: 1.05; overflow-wrap: anywhere; }
+.hero.ok .big { color: var(--ok); }
+.hero.bad .big { color: var(--bad); }
+.hero-eq { color: var(--muted); font-size: 0.86rem; }
+.hero-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px 24px; }
+.hero .pill, .hero .pill.ok, .hero .pill.bad { background: var(--surface); }
+
+/* carte sempre a portata di mano */
+.strip { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 2px 14px; -webkit-overflow-scrolling: touch; }
+.strip-item { flex: 0 0 min(82%, 290px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.si-meta { display: flex; flex-direction: column; gap: 8px; }
+
+/* pulsante tondo */
+.fab { position: fixed; z-index: 15; right: max(18px, calc(env(safe-area-inset-right, 0px) + 14px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 66px; height: 66px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 26px -6px rgba(0, 0, 0, 0.5); }
+.fab:hover { filter: brightness(1.07); }
+.fab:active { transform: scale(0.96); }
+#toast { position: fixed; z-index: 25; left: 50%; transform: translateX(-50%); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; gap: 12px; width: max-content; max-width: min(92vw, 460px); font-size: 0.88rem; }
+#toast .btn { background: transparent; color: var(--bg); border-color: var(--bg); }
+
+/* scelta carta e importo */
+.sheet { max-width: 480px; }
+.picks { display: flex; flex-direction: column; gap: 10px; }
+.pick { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+.pick:hover { border-color: var(--accent); }
+.pick.on { border-color: var(--accent); background: var(--accent-soft); }
+.pick .dot { width: 38px; height: 26px; border-radius: 7px; flex: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+.pk-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pk-main b { font-weight: 700; overflow-wrap: anywhere; }
+.pk-main span { font-size: 0.8rem; color: var(--muted); }
+.pk-side { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+input.q-amount { font-size: 2rem; font-weight: 500; padding: 12px 14px; }
+.more { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.more summary { cursor: pointer; font-size: 0.86rem; font-weight: 600; color: var(--muted); }
+.more .fields { margin-top: 12px; }
+
+/* liquidità */
+textarea { font: inherit; font-size: 0.95rem; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; width: 100%; min-width: 0; resize: vertical; }
+textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.cash-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cash-list li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 130px) auto; gap: 8px; align-items: center; }
+.cash-amt { text-align: right; }
+.inline-form { flex-direction: row; flex-wrap: wrap; align-items: flex-end; }
+.inline-form .field { flex: 1 1 140px; }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="titles">
+      <span class="eyebrow">Portafoglio</span>
+      <h1>Le mie carte di credito</h1>
+    </div>
+    <div class="actions">
+      <button class="btn small" type="button" id="backup-export">Esporta backup</button>
+      <button class="btn small" type="button" id="backup-import-trigger">Importa backup</button>
+      <input id="backup-import" type="file" accept="application/json,.json" hidden>
+      <span id="status" role="status" aria-live="polite"></span>
+    </div>
+  </header>
+  <main id="view"><p class="loading">Caricamento…</p></main>
+  <p class="foot" id="foot"></p>
+</div>
+<div id="overlay" hidden></div>
+<button class="fab" id="fab" type="button" data-action="quick" title="Aggiungi una spesa" aria-label="Aggiungi una spesa" hidden><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+  var EUR = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR" });
+  var eur = function (n) { return EUR.format(n || 0); };
+  var DAY = 86400000;
+  var COLORS = [["petrol", "Petrolio"], ["ink", "Antracite"], ["plum", "Prugna"], ["copper", "Rame"], ["indigo", "Indaco"], ["moss", "Muschio"]];
+  var CATS = ["Spesa alimentare", "Ristoranti", "Trasporti", "Viaggi", "Casa e utenze", "Salute", "Abbonamenti", "Shopping", "Altro"];
+  var NETS = ["Visa", "Mastercard", "American Express", "Maestro", "Altro"];
+
+  var state = { cards: [], cash: [], notes: "" };
+  var quick = { id: null };
+  var lastTx = null;
+  var toastTimer = null;
+  var mode = "loading"; // loading | cloud | local
+  var ref = null;
+  var view = { id: null };
+  var confirmDelete = false;
+  var saveTimer = null, saving = false, dirty = false, loaded = false;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function uid() { return Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); }
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function isoDate(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+  function sum(arr, f) { return arr.reduce(function (s, x) { return s + (Number(f(x)) || 0); }, 0); }
+  function today0() { var t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+  function daysUntil(d) { return Math.round((d - today0()) / DAY); }
+  function fmtDate(d, withYear) {
+    var o = { day: "numeric", month: "short" };
+    if (withYear) o.year = "numeric";
+    return d.toLocaleDateString("it-IT", o);
+  }
+  function isoToDate(s) { return new Date(s + "T00:00:00"); }
+
+  /* ---------- calcoli ---------- */
+  function balance(c) {
+    var b = (c.txs || []).reduce(function (s, t) { return s + (t.type === "pagamento" ? -t.amount : t.amount); }, 0);
+    return Math.max(0, Math.round(b * 100) / 100);
+  }
+  function nextDate(day) {
+    var t = today0(), y = t.getFullYear(), m = t.getMonth();
+    function make(yy, mm) {
+      var last = new Date(yy, mm + 1, 0).getDate();
+      return new Date(yy, mm, Math.min(day, last));
+    }
+    var d = make(y, m);
+    if (d < t) d = make(m === 11 ? y + 1 : y, (m + 1) % 12);
+    return d;
+  }
+  function expiryDate(c) { return new Date(c.expYear, c.expMonth, 0); }
+  function whenLabel(days) {
+    if (days < 0) return "scaduta";
+    if (days === 0) return "oggi";
+    if (days === 1) return "domani";
+    return "tra " + days + " giorni";
+  }
+  function tone(days) { return days < 0 || days <= 3 ? "bad" : days <= 10 ? "warn" : ""; }
+  function utilTone(p) { return p <= 30 ? "" : p <= 70 ? "warn" : "bad"; }
+
+  function upcoming() {
+    var out = [];
+    state.cards.forEach(function (c) {
+      var b = balance(c);
+      if (b > 0 && c.dueDay) {
+        var d = nextDate(c.dueDay);
+        out.push({ days: daysUntil(d), date: d, title: "Pagamento " + c.name, sub: "Da saldare " + eur(b) + " · " + fmtDate(d), id: c.id });
+      }
+      var e = expiryDate(c), ed = daysUntil(e);
+      if (ed <= 120) {
+        out.push({ days: ed, date: e, title: "Scadenza carta " + c.name, sub: "Valida fino al " + pad(c.expMonth) + "/" + String(c.expYear).slice(-2), id: c.id });
+      }
+    });
+    out.sort(function (a, b) { return a.days - b.days; });
+    return out;
+  }
+
+  /* ---------- salvataggio ---------- */
+  function setStatus(txt, err) {
+    var el = $("status");
+    el.textContent = txt || "";
+    el.className = err ? "err" : "";
+  }
+  function persist() {
+    dirty = true;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 400);
+  }
+  async function flush() {
+    if (saving) { saveTimer = setTimeout(flush, 300); return; }
+    dirty = false;
+    if (ref) {
+      saving = true;
+      setStatus("Salvataggio…");
+      try {
+        await ref.set(JSON.parse(JSON.stringify(state)));
+        setStatus("Salvato");
+      } catch (e) {
+        setStatus("Non salvato" + (e && e.code ? " (" + e.code + ")" : ""), true);
+      }
+      saving = false;
+    } else {
+      try { localStorage.setItem("carte-v2", JSON.stringify(state)); setStatus("Salvato in questo browser"); } catch (e) { setStatus("Non salvato", true); }
+    }
+  }
+
+  /* ---------- HTML: componenti ---------- */
+  function plastic(c, asButton) {
+    var tag = asButton ? "button" : "div";
+    var attrs = asButton ? ' type="button" data-action="open" data-id="' + esc(c.id) + '" aria-label="Apri ' + esc(c.name) + '"' : "";
+    return '<' + tag + ' class="plastic c-' + esc(c.color || "petrol") + '"' + attrs + '>' +
+      '<div class="p-top"><span class="issuer">' + esc(c.issuer || "Carta") + '</span><span class="network">' + esc(c.network || "") + '</span></div>' +
+      '<div class="chip"></div>' +
+      '<div class="p-num">•••• •••• •••• ' + esc(c.last4) + '</div>' +
+      '<div class="p-bot"><span class="p-name">' + esc(c.name) + '</span><span class="p-exp">' + pad(c.expMonth) + '/' + String(c.expYear).slice(-2) + '</span></div>' +
+      '</' + tag + '>';
+  }
+  function flagsFor(c) {
+    var f = [];
+    var ed = daysUntil(expiryDate(c));
+    if (ed < 0) f.push('<span class="pill bad">Carta scaduta</span>');
+    else if (ed <= 90) f.push('<span class="pill warn">Scade ' + whenLabel(ed) + '</span>');
+    if (c.dueDay && balance(c) > 0) {
+      var dd = daysUntil(nextDate(c.dueDay));
+      f.push('<span class="pill ' + tone(dd) + '">Pagamento ' + whenLabel(dd) + '</span>');
+    }
+    return f.length ? '<div class="flags">' + f.join("") + '</div>' : "";
+  }
+  function usageBar(used, limit) {
+    var p = limit ? Math.min(100, used / limit * 100) : 0;
+    return { pct: p, html: '<div class="bar ' + utilTone(p) + '" role="img" aria-label="Utilizzo ' + Math.round(p) + ' per cento"><i style="width:' + p.toFixed(1) + '%"></i></div>' };
+  }
+
+  function emptyHTML() {
+    var demo = { name: "La tua carta", issuer: "Emittente", network: "Circuito", last4: "0000", expMonth: 12, expYear: 2030, color: "petrol" };
+    return '<section class="empty">' +
+      '<div class="copy">' +
+      '<span class="eyebrow">Nessuna carta registrata</span>' +
+      '<h2 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.02em">Tieni sotto controllo plafond, scadenze e spese.</h2>' +
+      '<p>Per ogni carta registri le ultime 4 cifre, la scadenza, il plafond e i giorni di chiusura e addebito. L\'app calcola quanto hai usato, quanto resta e quando devi pagare. Il numero completo, il CVV e il PIN non servono e non vanno inseriti.</p>' +
+      '<div class="btns"><button class="btn primary" type="button" data-action="add-card">Aggiungi la prima carta</button>' +
+      '<button class="btn" type="button" data-action="sample">Prova con dati di esempio</button></div>' +
+      '</div>' +
+      '<div aria-hidden="true"><div class="plastic ghost"><div class="p-top"><span class="issuer">Emittente</span><span class="network">Circuito</span></div><div class="chip"></div><div class="p-num">•••• •••• •••• 0000</div><div class="p-bot"><span class="p-name">Il tuo nome carta</span><span class="p-exp">MM/AA</span></div></div></div>' +
+      '</section>';
+  }
+
+  function signed(n) {
+    n = Math.round(n * 100) / 100;
+    if (n > 0) return "+" + eur(n);
+    if (n < 0) return "−" + eur(-n);
+    return eur(0);
+  }
+  function cashTotal() { return sum(state.cash, function (x) { return x.amount; }); }
+  function debtTotal() { return sum(state.cards, balance); }
+
+  function heroHTML() {
+    var cash = cashTotal(), debt = debtTotal();
+    var net = Math.round((cash - debt) * 100) / 100;
+    var t = net > 0 ? "ok" : net < 0 ? "bad" : "";
+    var label = net > 0 ? "In profitto" : net < 0 ? "In debito" : "In pari";
+    var limit = sum(state.cards, function (c) { return c.limit; });
+    var u = usageBar(debt, limit);
+    return '<section class="hero ' + t + '" aria-label="Situazione complessiva">' +
+      '<div class="hero-main"><span class="eyebrow">Saldo netto</span>' +
+      '<div class="hero-net"><span class="big num">' + signed(net) + '</span><span class="pill ' + t + '">' + label + '</span></div>' +
+      '<p class="hero-eq">Liquidità meno quello che hai speso con le carte e non hai ancora saldato.</p></div>' +
+      '<div class="hero-figs">' +
+      '<div class="fig"><span class="eyebrow">Liquidità</span><span class="v">' + eur(cash) + '</span></div>' +
+      '<div class="fig"><span class="eyebrow">Speso con le carte</span><span class="v">' + eur(debt) + '</span></div>' +
+      '<div class="fig"><span class="eyebrow">Plafond libero</span><span class="v">' + eur(Math.max(0, limit - debt)) + '</span></div>' +
+      '</div>' +
+      (limit ? '<div><div class="bar-label"><span>Utilizzo del plafond</span><span class="num">' + Math.round(u.pct) + '%</span></div>' + u.html + '</div>' : '') +
+      '</section>';
+  }
+
+  function stripHTML() {
+    var h = '<section><div class="section-head"><h2>Le tue carte</h2><button class="btn small" type="button" data-action="add-card">Aggiungi carta</button></div><div class="strip" tabindex="0" aria-label="Elenco carte">';
+    state.cards.forEach(function (c) {
+      var b = balance(c), p = c.limit ? Math.min(100, b / c.limit * 100) : 0;
+      h += '<article class="strip-item">' + plastic(c, true) +
+        '<div class="si-meta"><div class="bar-label"><span>Speso <b class="num">' + eur(b) + '</b></span><span class="num">' + Math.round(p) + '%</span></div>' +
+        '<div class="bar ' + utilTone(p) + '"><i style="width:' + p.toFixed(1) + '%"></i></div>' +
+        '<div class="bar-label" style="margin:0"><span>Disponibile <span class="num">' + eur(Math.max(0, c.limit - b)) + '</span></span></div>' +
+        flagsFor(c) + '</div></article>';
+    });
+    return h + '</div></section>';
+  }
+
+  function cashHTML() {
+    var h = '<section class="panel" id="cash"><div class="section-head" style="margin:0"><h2>Liquidità e altre informazioni</h2><span class="num" id="cash-total">' + eur(cashTotal()) + '</span></div>';
+    if (state.cash.length) {
+      h += '<ul class="cash-list">' + state.cash.map(function (x) {
+        return '<li><input class="cash-label" type="text" maxlength="40" value="' + esc(x.label) + '" data-cash="' + esc(x.id) + '" data-field="label" aria-label="Voce">' +
+          '<input class="cash-amt num" type="text" inputmode="decimal" value="' + esc(String(x.amount).replace(".", ",")) + '" data-cash="' + esc(x.id) + '" data-field="amount" aria-label="Importo in euro">' +
+          '<button class="x" type="button" data-action="del-cash" data-id="' + esc(x.id) + '" aria-label="Elimina voce">×</button></li>';
+      }).join("") + '</ul>';
+    } else {
+      h += '<p class="muted">Aggiungi i soldi che hai a disposizione: conto corrente, contanti, risparmi. Entrano nel saldo netto qui in alto.</p>';
+    }
+    h += '<form id="cash-form" class="inline-form" autocomplete="off">' +
+      '<div class="field"><label for="cash-label">Voce</label><input id="cash-label" type="text" maxlength="40" placeholder="Es. Conto corrente" required></div>' +
+      '<div class="field"><label for="cash-amount">Importo (€)</label><input id="cash-amount" type="text" inputmode="decimal" placeholder="0,00" required></div>' +
+      '<button class="btn" type="submit">Aggiungi</button></form>';
+    h += '<div class="field"><label for="notes">Note</label><textarea id="notes" rows="3" maxlength="2000" placeholder="Altre informazioni utili: obiettivi di risparmio, scadenze, appunti…">' + esc(state.notes) + '</textarea></div></section>';
+    return h;
+  }
+
+  function listHTML() {
+    if (mode === "loading") return '<p class="loading">Caricamento…</p>';
+    var cards = state.cards;
+    var hasSample = cards.some(function (c) { return c.sample; }) || state.cash.some(function (x) { return x.sample; });
+    var h = "";
+    if (hasSample) {
+      h += '<div class="banner"><span>Stai vedendo dati di esempio.</span><button class="btn small" type="button" data-action="clear-sample">Rimuovi gli esempi</button></div>';
+    }
+    h += '<div id="hero">' + heroHTML() + '</div>';
+    if (!cards.length) {
+      h += emptyHTML() + cashHTML();
+      return h;
+    }
+    h += stripHTML() + cashHTML();
+    var up = upcoming().slice(0, 6);
+    h += '<section><div class="section-head"><h2>Prossime scadenze</h2></div>';
+    if (up.length) {
+      h += '<ul class="upcoming">' + up.map(function (u) {
+        return '<li><div class="what"><b>' + esc(u.title) + '</b><span>' + esc(u.sub) + '</span></div><span class="pill ' + tone(u.days) + '">' + whenLabel(u.days) + '</span></li>';
+      }).join("") + '</ul>';
+    } else {
+      h += '<p class="none">Nessun pagamento o scadenza di carta nei prossimi mesi.</p>';
+    }
+    return h + '</section>';
+  }
+
+  function fromFieldHTML() {
+    if (!state.cash.length) return "";
+    return '<div class="field" id="tx-from-wrap" hidden><label for="tx-from">Preleva da</label><select id="tx-from"><option value="">Nessuna voce</option>' +
+      state.cash.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.label) + '</option>'; }).join("") + '</select></div>';
+  }
+
+  function detailHTML(c) {
+    var b = balance(c), u = usageBar(b, c.limit);
+    var txs = (c.txs || []).slice().sort(function (a, z) { return a.date < z.date ? 1 : a.date > z.date ? -1 : 0; });
+    var ym = isoDate(new Date()).slice(0, 7);
+    var byCat = {};
+    txs.forEach(function (t) {
+      if (t.type !== "pagamento" && t.date.slice(0, 7) === ym) {
+        var k = t.cat || "Altro";
+        byCat[k] = (byCat[k] || 0) + t.amount;
+      }
+    });
+    var catKeys = Object.keys(byCat).sort(function (a, z) { return byCat[z] - byCat[a]; });
+    var catMax = catKeys.length ? byCat[catKeys[0]] : 1;
+    var monthName = new Date().toLocaleDateString("it-IT", { month: "long" });
+    var h = '<div style="display:flex;flex-direction:column;gap:24px">';
+    h += '<button class="btn small back" type="button" data-action="back">← Tutte le carte</button>';
+    h += '<section class="detail-head">' + plastic(c, false) +
+      '<div class="detail-info">' + flagsFor(c) +
+      '<div><div class="bar-label"><span>' + eur(b) + ' utilizzati su ' + eur(c.limit) + '</span><span class="num">' + Math.round(u.pct) + '%</span></div>' + u.html + '</div>' +
+      '<div class="stats">' +
+      '<div class="stat"><span>Disponibile</span><b class="num">' + eur(Math.max(0, c.limit - b)) + '</b></div>' +
+      '<div class="stat"><span>Emittente</span><b>' + esc(c.issuer || "—") + '</b></div>' +
+      '<div class="stat"><span>Chiusura estratto</span><b>' + (c.closingDay ? 'il ' + c.closingDay + ' del mese' : '—') + '</b></div>' +
+      '<div class="stat"><span>Addebito / pagamento</span><b>' + (c.dueDay ? 'il ' + c.dueDay + ' · ' + fmtDate(nextDate(c.dueDay)) : '—') + '</b></div>' +
+      '</div>' +
+      '<div class="row-actions">' +
+      '<button class="btn small" type="button" data-action="edit-card" data-id="' + esc(c.id) + '">Modifica</button>' +
+      (confirmDelete
+        ? '<span class="muted">Eliminare questa carta e le sue spese?</span><button class="btn small danger solid" type="button" data-action="delete-confirm" data-id="' + esc(c.id) + '">Elimina</button><button class="btn small" type="button" data-action="delete-cancel">Annulla</button>'
+        : '<button class="btn small danger" type="button" data-action="delete-ask">Elimina carta</button>') +
+      '</div></div></section>';
+
+    h += '<section class="two-col"><div class="panel"><h2>Movimenti</h2>' +
+      '<form id="tx-form" autocomplete="off"><div class="fields">' +
+      '<div class="field"><label for="tx-type">Tipo</label><select id="tx-type"><option value="spesa">Spesa</option><option value="pagamento">Pagamento alla carta</option></select></div>' +
+      '<div class="field"><label for="tx-date">Data</label><input id="tx-date" type="date" value="' + isoDate(new Date()) + '" required></div>' +
+      '<div class="field"><label for="tx-amount">Importo (€)</label><input id="tx-amount" type="text" inputmode="decimal" placeholder="0,00" required></div>' +
+      '<div class="field"><label for="tx-cat">Categoria</label><select id="tx-cat">' + CATS.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join("") + '</select></div>' +
+      fromFieldHTML() +
+      '<div class="field wide"><label for="tx-desc">Descrizione</label><input id="tx-desc" type="text" maxlength="60" placeholder="Es. Supermercato" required></div>' +
+      '</div><div class="form-error" id="tx-error"></div><div><button class="btn primary" type="submit">Aggiungi movimento</button></div></form>';
+    if (txs.length) {
+      h += '<ul class="tx-list">' + txs.map(function (t) {
+        var isIn = t.type === "pagamento";
+        return '<li><span class="tx-date">' + esc(fmtDate(isoToDate(t.date))) + '</span>' +
+          '<span class="tx-desc"><b>' + esc(t.desc) + '</b><span>' + (isIn ? "Pagamento" : esc(t.cat || "Altro")) + '</span></span>' +
+          '<span class="tx-amt' + (isIn ? ' in' : '') + '">' + (isIn ? "+" : "−") + eur(t.amount) + '</span>' +
+          '<button class="x" type="button" data-action="del-tx" data-id="' + esc(t.id) + '" aria-label="Elimina movimento">×</button></li>';
+      }).join("") + '</ul>';
+    } else {
+      h += '<p class="muted">Ancora nessun movimento. Aggiungi la prima spesa qui sopra.</p>';
+    }
+    h += '</div>';
+    h += '<div class="panel"><h2>Spese di ' + esc(monthName) + '</h2>';
+    if (catKeys.length) {
+      h += '<div class="cats">' + catKeys.map(function (k) {
+        return '<div class="cat-row"><span>' + esc(k) + '</span><span class="num">' + eur(byCat[k]) + '</span><div class="bar"><i style="width:' + (byCat[k] / catMax * 100).toFixed(1) + '%"></i></div></div>';
+      }).join("") + '</div>' +
+        '<p class="hint">Totale del mese: <span class="num">' + eur(sum(catKeys, function (k) { return byCat[k]; })) + '</span></p>';
+    } else {
+      h += '<p class="muted">Nessuna spesa registrata in questo mese.</p>';
+    }
+    h += '</div></section></div>';
+    return h;
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    var root = $("view");
+    if (view.id) {
+      var c = state.cards.find(function (x) { return x.id === view.id; });
+      if (c) { root.innerHTML = detailHTML(c); updateFoot(); return; }
+      view.id = null; confirmDelete = false;
+    }
+    root.innerHTML = listHTML();
+    updateFoot();
+  }
+  function updateFoot() {
+    var f = $("foot");
+    if (mode === "cloud") f.textContent = "I dati sono salvati nel tuo spazio privato di questa pagina e non sono visibili ad altri. Registra solo le ultime 4 cifre della carta: non inserire mai numero completo, CVV o PIN.";
+    else if (mode === "local") f.textContent = "Il salvataggio nel cloud non è disponibile in questa vista: i dati restano solo in questo browser. Registra solo le ultime 4 cifre: non inserire mai numero completo, CVV o PIN.";
+    else f.textContent = "";
+    var fab = $("fab"); if (fab) fab.hidden = (mode === "loading");
+  }
+
+  /* ---------- form carta ---------- */
+  function openForm(card) {
+    var c = card || { name: "", issuer: "", network: "Visa", last4: "", expMonth: "", expYear: "", limit: "", closingDay: "", dueDay: "", color: "petrol" };
+    var h = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="form-title">' +
+      '<div class="modal-head"><h2 id="form-title">' + (card ? "Modifica carta" : "Nuova carta") + '</h2><button class="x" type="button" data-action="close-form" aria-label="Chiudi">×</button></div>' +
+      '<form id="card-form" autocomplete="off" data-edit="' + (card ? esc(card.id) : "") + '">' +
+      '<div class="fields">' +
+      '<div class="field wide"><label for="f-name">Nome della carta</label><input id="f-name" type="text" maxlength="30" value="' + esc(c.name) + '" placeholder="Es. Carta principale" required></div>' +
+      '<div class="field"><label for="f-issuer">Emittente</label><input id="f-issuer" type="text" maxlength="40" value="' + esc(c.issuer) + '" placeholder="Es. la tua banca"></div>' +
+      '<div class="field"><label for="f-network">Circuito</label><select id="f-network">' + NETS.map(function (n) { return '<option' + (n === c.network ? " selected" : "") + '>' + esc(n) + '</option>'; }).join("") + '</select></div>' +
+      '<div class="field"><label for="f-last4">Ultime 4 cifre</label><input id="f-last4" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" value="' + esc(c.last4) + '" placeholder="1234" required><span class="hint">Mai il numero completo.</span></div>' +
+      '<div class="field"><label for="f-limit">Plafond (€)</label><input id="f-limit" type="text" inputmode="decimal" value="' + esc(c.limit === "" ? "" : String(c.limit).replace(".", ",")) + '" placeholder="3000" required></div>' +
+      '<div class="field"><label for="f-month">Scadenza: mese</label><input id="f-month" type="number" min="1" max="12" value="' + esc(c.expMonth) + '" placeholder="MM" required></div>' +
+      '<div class="field"><label for="f-year">Scadenza: anno</label><input id="f-year" type="number" min="2000" max="2099" value="' + esc(c.expYear) + '" placeholder="AAAA" required></div>' +
+      '<div class="field"><label for="f-closing">Chiusura estratto (giorno)</label><input id="f-closing" type="number" min="1" max="31" value="' + esc(c.closingDay) + '" placeholder="Es. 28"></div>' +
+      '<div class="field"><label for="f-due">Addebito / pagamento (giorno)</label><input id="f-due" type="number" min="1" max="31" value="' + esc(c.dueDay) + '" placeholder="Es. 15"></div>' +
+      '<div class="field wide"><span class="lbl">Colore</span><div class="swatches">' +
+      COLORS.map(function (k) {
+        return '<label><input type="radio" name="color" value="' + k[0] + '"' + (c.color === k[0] ? " checked" : "") + '><span class="s-' + k[0] + '" title="' + k[1] + '"></span></label>';
+      }).join("") + '</div></div>' +
+      '</div>' +
+      '<div class="form-error" id="form-error" role="alert"></div>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-action="close-form">Annulla</button><button class="btn primary" type="submit">' + (card ? "Salva modifiche" : "Aggiungi carta") + '</button></div>' +
+      '</form></div>';
+    var ov = $("overlay");
+    ov.innerHTML = h;
+    ov.hidden = false;
+    var f = $("f-name"); if (f) f.focus();
+  }
+  function closeForm() { var ov = $("overlay"); ov.hidden = true; ov.innerHTML = ""; }
+
+  function num(s) { return parseFloat(String(s).replace(/\s/g, "").replace(/\./g, function (m, i, str) { return str.indexOf(",") >= 0 ? "" : m; }).replace(",", ".")); }
+
+  function saveCard() {
+    var err = $("form-error");
+    function fail(m) { err.textContent = m; }
+    var name = $("f-name").value.trim();
+    var last4 = $("f-last4").value.replace(/\D/g, "");
+    var limit = num($("f-limit").value);
+    var month = parseInt($("f-month").value, 10);
+    var year = parseInt($("f-year").value, 10);
+    var closing = $("f-closing").value ? parseInt($("f-closing").value, 10) : null;
+    var due = $("f-due").value ? parseInt($("f-due").value, 10) : null;
+    var colorEl = document.querySelector('input[name="color"]:checked');
+    if (!name) return fail("Dai un nome alla carta.");
+    if (last4.length !== 4) return fail("Inserisci esattamente le ultime 4 cifre. Il numero completo non serve.");
+    if (!(limit > 0)) return fail("Il plafond deve essere un importo maggiore di zero.");
+    if (!(month >= 1 && month <= 12)) return fail("Il mese di scadenza va da 1 a 12.");
+    if (year < 100) year += 2000;
+    if (!(year >= 2000 && year <= 2099)) return fail("Controlla l'anno di scadenza.");
+    if (closing !== null && !(closing >= 1 && closing <= 31)) return fail("Il giorno di chiusura va da 1 a 31.");
+    if (due !== null && !(due >= 1 && due <= 31)) return fail("Il giorno di pagamento va da 1 a 31.");
+    var data = {
+      name: name, issuer: $("f-issuer").value.trim(), network: $("f-network").value, last4: last4,
+      expMonth: month, expYear: year, limit: Math.round(limit * 100) / 100, closingDay: closing, dueDay: due,
+      color: colorEl ? colorEl.value : "petrol"
+    };
+    var editId = $("card-form").getAttribute("data-edit");
+    if (editId) {
+      var c = state.cards.find(function (x) { return x.id === editId; });
+      if (c) Object.assign(c, data);
+    } else {
+      data.id = uid(); data.txs = [];
+      state.cards.push(data);
+    }
+    closeForm();
+    persist();
+    render();
+  }
+
+  function addTx() {
+    var c = state.cards.find(function (x) { return x.id === view.id; });
+    var err = $("tx-error");
+    if (!c) return;
+    var amount = num($("tx-amount").value);
+    var desc = $("tx-desc").value.trim();
+    var date = $("tx-date").value;
+    if (!(amount > 0)) { err.textContent = "Inserisci un importo maggiore di zero."; return; }
+    if (!desc) { err.textContent = "Aggiungi una descrizione."; return; }
+    if (!date) { err.textContent = "Scegli la data."; return; }
+    var type = $("tx-type").value;
+    c.txs = c.txs || [];
+    var tx = { id: uid(), date: date, desc: desc, amount: Math.round(amount * 100) / 100, cat: type === "pagamento" ? "" : $("tx-cat").value, type: type };
+    var fromEl = $("tx-from");
+    if (type === "pagamento" && fromEl && fromEl.value) {
+      var src = state.cash.find(function (x) { return x.id === fromEl.value; });
+      if (src) { src.amount = Math.round((src.amount - tx.amount) * 100) / 100; tx.from = src.id; }
+    }
+    c.txs.push(tx);
+    persist();
+    render();
+    var d = $("tx-desc"); if (d) d.focus();
+  }
+
+  function sampleCards() {
+    function t(ago, desc, amt, cat, type) {
+      return { id: uid(), date: isoDate(addDays(new Date(), -ago)), desc: desc, amount: amt, cat: cat || "", type: type || "spesa" };
+    }
+    return [
+      { id: uid(), sample: true, name: "Principale (esempio)", issuer: "Banca Esempio", network: "Visa", last4: "4417", expMonth: 9, expYear: 2029, limit: 3000, closingDay: 28, dueDay: 15, color: "petrol",
+        txs: [t(2, "Supermercato", 64.8, "Spesa alimentare"), t(4, "Abbonamento streaming", 12.99, "Abbonamenti"), t(7, "Cena con amici", 86, "Ristoranti"), t(11, "Carburante", 58.3, "Trasporti"), t(16, "Farmacia", 23.4, "Salute")] },
+      { id: uid(), sample: true, name: "Viaggi (esempio)", issuer: "Banca Esempio", network: "Mastercard", last4: "0932", expMonth: 2, expYear: 2028, limit: 5000, closingDay: 5, dueDay: 20, color: "indigo",
+        txs: [t(3, "Treno Roma–Milano", 89.9, "Viaggi"), t(9, "Hotel a Firenze", 240, "Viaggi"), t(20, "Pagamento estratto", 150, "", "pagamento")] },
+      { id: uid(), sample: true, name: "Shopping (esempio)", issuer: "Banca Esempio", network: "Visa", last4: "7765", expMonth: new Date().getMonth() + 1, expYear: new Date().getFullYear() + (new Date().getMonth() === 11 ? 1 : 0), limit: 1500, closingDay: 10, dueDay: 25, color: "copper",
+        txs: [t(5, "Scarpe", 119, "Shopping"), t(13, "Libri", 42.5, "Shopping")] }
+    ];
+  }
+
+  /* ---------- spesa rapida ---------- */
+  function pickHTML(c, on) {
+    return '<button type="button" class="pick' + (on ? ' on' : '') + '" data-action="' + (on ? 'quick-change' : 'pick') + '" data-id="' + esc(c.id) + '">' +
+      '<span class="dot s-' + esc(c.color || "petrol") + '"></span>' +
+      '<span class="pk-main"><b>' + esc(c.name) + '</b><span class="num">•••• ' + esc(c.last4) + '</span></span>' +
+      '<span class="pk-side">' + (on ? 'Cambia' : 'Disp. ' + eur(Math.max(0, c.limit - balance(c)))) + '</span></button>';
+  }
+  function openQuick(preId) {
+    if (!state.cards.length) { openForm(null); return; }
+    var pre = preId && state.cards.some(function (c) { return c.id === preId; }) ? preId : null;
+    quick.id = pre || (state.cards.length === 1 ? state.cards[0].id : null);
+    $("overlay").hidden = false;
+    renderQuick();
+  }
+  function renderQuick() {
+    var h = '<div class="modal sheet" role="dialog" aria-modal="true" aria-labelledby="q-title">';
+    var c = quick.id ? state.cards.find(function (x) { return x.id === quick.id; }) : null;
+    if (!c) {
+      quick.id = null;
+      h += '<div class="modal-head"><h2 id="q-title">Con che carta hai speso?</h2><button class="x" type="button" data-action="close-form" aria-label="Chiudi">×</button></div>' +
+        '<div class="picks">' + state.cards.map(function (x) { return pickHTML(x, false); }).join("") + '</div>';
+    } else {
+      h += '<div class="modal-head"><h2 id="q-title">Quanto hai speso?</h2><button class="x" type="button" data-action="close-form" aria-label="Chiudi">×</button></div>' +
+        pickHTML(c, true) +
+        '<form id="quick-form" autocomplete="off">' +
+        '<div class="field"><label for="q-amount">Importo (€)</label><input id="q-amount" class="q-amount num" type="text" inputmode="decimal" placeholder="0,00" required></div>' +
+        '<details class="more"><summary>Data, categoria e descrizione</summary><div class="fields">' +
+        '<div class="field"><label for="q-date">Data</label><input id="q-date" type="date" value="' + isoDate(new Date()) + '"></div>' +
+        '<div class="field"><label for="q-cat">Categoria</label><select id="q-cat">' + CATS.map(function (k) { return '<option' + (k === "Altro" ? " selected" : "") + '>' + esc(k) + '</option>'; }).join("") + '</select></div>' +
+        '<div class="field wide"><label for="q-desc">Descrizione</label><input id="q-desc" type="text" maxlength="60" placeholder="Facoltativa"></div>' +
+        '</div></details>' +
+        '<div class="form-error" id="q-error" role="alert"></div>' +
+        '<div class="modal-foot"><button class="btn primary" type="submit">Aggiungi spesa</button></div></form>';
+    }
+    $("overlay").innerHTML = h + '</div>';
+    var a = $("q-amount"); if (a) a.focus();
+  }
+  function saveQuick() {
+    var c = state.cards.find(function (x) { return x.id === quick.id; });
+    var err = $("q-error");
+    if (!c) return;
+    var amount = num($("q-amount").value);
+    if (!(amount > 0)) { err.textContent = "Inserisci un importo maggiore di zero."; return; }
+    var cat = $("q-cat").value;
+    var t = { id: uid(), date: $("q-date").value || isoDate(new Date()), desc: $("q-desc").value.trim() || "Spesa", amount: Math.round(amount * 100) / 100, cat: cat, type: "spesa" };
+    c.txs = c.txs || [];
+    c.txs.push(t);
+    lastTx = { cid: c.id, tid: t.id };
+    closeForm();
+    persist();
+    render();
+    toast("Spesa di " + eur(t.amount) + " aggiunta a " + c.name, true);
+  }
+  function toast(msg, undo) {
+    var t = $("toast");
+    t.innerHTML = '<span>' + esc(msg) + '</span>' + (undo ? '<button type="button" class="btn small" data-action="undo">Annulla</button>' : "");
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; lastTx = null; }, 6000);
+  }
+
+  /* ---------- liquidità ---------- */
+  function addCash() {
+    var label = $("cash-label").value.trim();
+    var amount = num($("cash-amount").value);
+    if (!label || isNaN(amount)) return;
+    state.cash.push({ id: uid(), label: label, amount: Math.round(amount * 100) / 100 });
+    persist();
+    render();
+  }
+  function refreshTotals() {
+    var h = $("hero"); if (h) h.innerHTML = heroHTML();
+    var ct = $("cash-total"); if (ct) ct.textContent = eur(cashTotal());
+  }
+  function normalize(d) {
+    d = d || {};
+    return { cards: Array.isArray(d.cards) ? d.cards : [], cash: Array.isArray(d.cash) ? d.cash : [], notes: typeof d.notes === "string" ? d.notes : "" };
+  }
+  function canon(v) {
+    return JSON.stringify(v, function (k, x) {
+      if (x && typeof x === "object" && !Array.isArray(x)) {
+        var o = {}; Object.keys(x).sort().forEach(function (key) { o[key] = x[key]; }); return o;
+      }
+      return x;
+    });
+  }
+
+  /* ---------- eventi ---------- */
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest("[data-action]");
+    if (e.target.id === "overlay") { closeForm(); return; }
+    if (!el) return;
+    var a = el.getAttribute("data-action"), id = el.getAttribute("data-id");
+    if (a === "add-card") openForm(null);
+    else if (a === "edit-card") openForm(state.cards.find(function (x) { return x.id === id; }));
+    else if (a === "close-form") closeForm();
+    else if (a === "open") { view.id = id; confirmDelete = false; render(); window.scrollTo(0, 0); }
+    else if (a === "back") { view.id = null; confirmDelete = false; render(); window.scrollTo(0, 0); }
+    else if (a === "delete-ask") { confirmDelete = true; render(); }
+    else if (a === "delete-cancel") { confirmDelete = false; render(); }
+    else if (a === "delete-confirm") {
+      state.cards = state.cards.filter(function (x) { return x.id !== id; });
+      view.id = null; confirmDelete = false; persist(); render(); window.scrollTo(0, 0);
+    }
+    else if (a === "del-tx") {
+      var c = state.cards.find(function (x) { return x.id === view.id; });
+      if (c) {
+        var gone = c.txs.find(function (t) { return t.id === id; });
+        if (gone && gone.from) {
+          var src = state.cash.find(function (x) { return x.id === gone.from; });
+          if (src) src.amount = Math.round((src.amount + gone.amount) * 100) / 100;
+        }
+        c.txs = c.txs.filter(function (t) { return t.id !== id; }); persist(); render();
+      }
+    }
+    else if (a === "quick") openQuick(view.id)
+    else if (a === "pick") { quick.id = id; renderQuick(); }
+    else if (a === "quick-change") { quick.id = null; renderQuick(); }
+    else if (a === "undo") {
+      if (lastTx) {
+        var uc = state.cards.find(function (x) { return x.id === lastTx.cid; });
+        if (uc) uc.txs = uc.txs.filter(function (t) { return t.id !== lastTx.tid; });
+        lastTx = null; $("toast").hidden = true; persist(); render();
+      }
+    }
+    else if (a === "del-cash") { state.cash = state.cash.filter(function (x) { return x.id !== id; }); persist(); render(); }
+    else if (a === "sample") {
+      state.cards = state.cards.concat(sampleCards());
+      state.cash.push({ id: uid(), sample: true, label: "Conto corrente (esempio)", amount: 2400 }, { id: uid(), sample: true, label: "Contanti (esempio)", amount: 150 });
+      persist(); render();
+    }
+    else if (a === "clear-sample") {
+      state.cards = state.cards.filter(function (x) { return !x.sample; });
+      state.cash = state.cash.filter(function (x) { return !x.sample; });
+      view.id = null; persist(); render();
+    }
+  });
+  document.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (e.target.id === "card-form") saveCard();
+    else if (e.target.id === "tx-form") addTx();
+    else if (e.target.id === "quick-form") saveQuick();
+    else if (e.target.id === "cash-form") addCash();
+  });
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    var cid = t.getAttribute && t.getAttribute("data-cash");
+    if (cid) {
+      var it = state.cash.find(function (x) { return x.id === cid; });
+      if (!it) return;
+      if (t.getAttribute("data-field") === "amount") {
+        var v = num(t.value);
+        if (!isNaN(v)) it.amount = Math.round(v * 100) / 100;
+        t.value = String(it.amount).replace(".", ",");
+      } else {
+        it.label = t.value.trim() || "Voce";
+      }
+      persist(); refreshTotals();
+    } else if (t.id === "notes") {
+      state.notes = t.value.slice(0, 2000); persist();
+    } else if (t.id === "tx-type") {
+      var w = $("tx-from-wrap"); if (w) w.hidden = t.value !== "pagamento";
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !$("overlay").hidden) closeForm();
+  });
+
+
+  /* ---------- backup locale ---------- */
+  function exportBackup() {
+    try {
+      var payload = { app: "Portafoglio carte", version: 1, exportedAt: new Date().toISOString(), data: state };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "backup-portafoglio-carte-" + isoDate(new Date()) + ".json";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      setStatus("Backup esportato");
+    } catch (e) { setStatus("Esportazione non riuscita", true); }
+  }
+  function importBackup(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(String(reader.result || ""));
+        var incoming = normalize(parsed && parsed.data ? parsed.data : parsed);
+        if (!Array.isArray(incoming.cards) || !Array.isArray(incoming.cash)) throw new Error("Formato non valido");
+        if (!confirm("Importare il backup? I dati attuali su questo iPhone verranno sostituiti.")) return;
+        state = incoming; view.id = null; ref = null; mode = "local";
+        localStorage.setItem("carte-v2", JSON.stringify(state));
+        render(); setStatus("Backup importato");
+      } catch (e) { setStatus("Backup non valido o illeggibile", true); }
+    };
+    reader.onerror = function () { setStatus("Impossibile leggere il file", true); };
+    reader.readAsText(file);
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target && e.target.id === "backup-export") exportBackup();
+    if (e.target && e.target.id === "backup-import-trigger") $("backup-import").click();
+  });
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "backup-import") {
+      importBackup(e.target.files && e.target.files[0]);
+      e.target.value = "";
+    }
+  });
+
+  /* ---------- avvio ---------- */
+  function loadLocal() {
+    var d = null;
+    try {
+      var raw = localStorage.getItem("carte-v2");
+      if (raw) d = JSON.parse(raw);
+      else { var old = localStorage.getItem("carte-v1"); if (old) d = { cards: JSON.parse(old) }; }
+    } catch (e) { d = null; }
+    state = normalize(d);
+  }
+  async function init() {
+    render();
+    var db = null, user = null, id = null;
+    try {
+      if (window.claude && window.claude.use) {
+        db = await window.claude.use("db");
+        user = await window.claude.use("user");
+      }
+    } catch (e) { db = null; }
+    try { id = user ? await user.id() : null; } catch (e) { id = null; }
+    if (db && id) {
+      ref = db.doc("data/users/" + id + "/wallet");
+      var timer = setTimeout(function () { if (!loaded) setStatus("Dati non raggiungibili al momento", true); }, 10000);
+      ref.onSnapshot(function (snap) {
+        var first = !loaded;
+        loaded = true; clearTimeout(timer);
+        if (first) { mode = "cloud"; setStatus(""); }
+        if (!first && (dirty || saving)) return;
+        var d = snap.exists ? snap.data() : null;
+        var next = normalize(d ? JSON.parse(JSON.stringify(d)) : null);
+        if (!first && canon(next) === canon(state)) return;
+        if (first && (dirty || saving)) return;
+        state = next;
+        render();
+      }, function () {
+        clearTimeout(timer);
+        setStatus("Salvataggio non disponibile", true);
+        mode = "local"; ref = null; loadLocal(); render();
+      });
+    } else {
+      mode = "local";
+      loadLocal();
+      render();
+    }
+  }
+  init();
+
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./sw.js").catch(function (err) {
+        console.warn("Service worker non registrato:", err);
+      });
+    });
+  }
+})();
+</script>
+
+</body></html>
